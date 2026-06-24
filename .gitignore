@@ -1,0 +1,33 @@
+# 가상환경 (node_modules와 같은 역할)
+.venv/
+venv/
+env/
+
+# Python 캐시 / 컴파일 파일
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 환경변수 / 비밀키 (절대 올리지 말 것)
+.env
+.env.*
+!.env.example
+
+# 테스트 / 린트 캐시
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# 빌드 산출물
+dist/
+build/
+*.egg-info/
+
+# OS / 에디터
+.DS_Store
+.idea/
+*.swp
+*.swo
