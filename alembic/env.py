@@ -12,8 +12,8 @@ from alembic import context
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 load_dotenv()
 
-from database import Base
-import models
+from app.db.base import Base
+import app.models  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
