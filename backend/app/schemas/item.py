@@ -19,7 +19,6 @@ class ItemUpdate(BaseModel):
     price: float
     is_offer: bool | None = None
 
-
 class ItemResponse(BaseModel):
     id: int = Field(..., description="상품 ID")
     name: str
