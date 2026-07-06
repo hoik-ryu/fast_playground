@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
-from app.schemas.item import ItemCreate, ItemResponse, ItemUpdate
+from app.schemas.item import ItemCreate, ItemName, ItemResponse, ItemUpdate
 from app.services import item_service
 
 router = APIRouter(prefix="/items", tags=["Items"])
@@ -22,9 +22,10 @@ router = APIRouter(prefix="/items", tags=["Items"])
     "",
     response_model=ItemResponse,
     summary="상품 생성",
-    description="PostgreSQL items 테이블에 새 행을 추가합니다.",
+    description="PostgreSQL items 테이블에 새 행을 추가합니다. name은 과일 enum만 허용됩니다.",
     responses={
         409: {"description": "name 중복"},
+        422: {"description": "허용되지 않은 name (enum 위반)"},
     },
 )
 def create_item(item: ItemCreate, db: Session = Depends(get_db)):
@@ -41,14 +42,14 @@ def create_item(item: ItemCreate, db: Session = Depends(get_db)):
     description="등록된 상품 목록을 반환합니다. name Query로 필터할 수 있습니다.",
 )
 def read_items(
-    name: str | None = Query(
+    name: ItemName | None = Query(
         default=None,
-        description="이름으로 필터 (Swagger Query 파라미터 예시)",
-        examples=["사과"],
+        description="이름으로 필터 (과일 enum)",
+        examples=[ItemName.APPLE],
     ),
     db: Session = Depends(get_db),
 ):
-    return item_service.list_items(db, name=name)
+    return item_service.list_items(db, name=name.value if name else None)
 
 
 @router.get(

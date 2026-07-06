@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import type { Item } from "../types/item";
+import type { Item, ItemName } from "../types/item";
+import { ITEM_NAMES } from "../types/item";
 import {
   createItem,
   deleteItem,
@@ -12,7 +13,7 @@ import {
 // - 생성/수정/삭제로 CRUD 전체 흐름을 테스트합니다.
 
 interface FormState {
-  name: string;
+  name: ItemName | "";
   price: string;
   is_offer: boolean;
 }
@@ -53,16 +54,16 @@ export default function ItemsPage() {
     e.preventDefault();
     setError(null);
 
+    if (!form.name || Number.isNaN(Number(form.price))) {
+      setError("과일 이름과 가격을 올바르게 입력하세요.");
+      return;
+    }
+
     const payload = {
-      name: form.name.trim(),
+      name: form.name,
       price: Number(form.price),
       is_offer: form.is_offer,
     };
-
-    if (!payload.name || Number.isNaN(payload.price)) {
-      setError("이름과 가격을 올바르게 입력하세요.");
-      return;
-    }
 
     try {
       if (editingId === null) {
@@ -80,7 +81,7 @@ export default function ItemsPage() {
   const handleEdit = (item: Item) => {
     setEditingId(item.id);
     setForm({
-      name: item.name,
+      name: item.name as ItemName,
       price: String(item.price),
       is_offer: Boolean(item.is_offer),
     });
@@ -123,11 +124,19 @@ export default function ItemsPage() {
           borderRadius: 8,
         }}
       >
-        <input
-          placeholder="이름"
+        <select
           value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-        />
+          onChange={(e) =>
+            setForm({ ...form, name: e.target.value as ItemName | "" })
+          }
+        >
+          <option value="">과일 선택</option>
+          {ITEM_NAMES.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
         <input
           placeholder="가격"
           type="number"

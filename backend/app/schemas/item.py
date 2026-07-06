@@ -6,18 +6,20 @@ Field(description=...) 수정 시 Swagger의 body/response 필드 설명이 바�
 """
 
 from pydantic import BaseModel, ConfigDict, Field
+from app.core.enums import ItemName
 
 
 class ItemCreate(BaseModel):
-    name: str = Field(..., description="상품명 (unique)", examples=["사과"])
+    name: ItemName = Field(..., description="상품명 (과일만 허용)", examples=[ItemName.APPLE])
     price: float = Field(..., description="가격", ge=0, examples=[1000])
     is_offer: bool | None = Field(None, description="할인 여부")
 
 
 class ItemUpdate(BaseModel):
-    name: str
+    name: ItemName
     price: float
     is_offer: bool | None = None
+
 
 class ItemResponse(BaseModel):
     id: int = Field(..., description="상품 ID")

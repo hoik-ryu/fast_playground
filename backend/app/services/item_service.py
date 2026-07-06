@@ -35,7 +35,7 @@ def get_item(db: Session, item_id: int) -> Item:
 
 
 def create_item(db: Session, data: ItemCreate) -> Item:
-    item = Item(**data.model_dump())
+    item = Item(**data.model_dump(mode="json"))
     db.add(item)
 
     try:
@@ -50,7 +50,7 @@ def create_item(db: Session, data: ItemCreate) -> Item:
 
 def update_item(db: Session, item_id: int, data: ItemUpdate) -> Item:
     item = get_item(db, item_id)
-    item.name = data.name
+    item.name = data.name.value
     item.price = data.price
     item.is_offer = data.is_offer
 
