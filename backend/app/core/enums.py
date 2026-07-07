@@ -1,17 +1,15 @@
 from enum import Enum
 
 
-
-
 class AuditAction(str, Enum):
-  """허용되는 감사 작업 목록."""
+    """허용되는 감사 작업 목록."""
 
-  LOGIN = "LOGIN"
-  LOGOUT = "LOGOUT"
-  CREATE = "CREATE"
-  UPDATE = "UPDATE"
-  DELETE = "DELETE"
-  CHANGE_PASSWORD = "CHANGE_PASSWORD"
+    LOGIN = "LOGIN"
+    LOGOUT = "LOGOUT"
+    CREATE = "CREATE"
+    UPDATE = "UPDATE"
+    DELETE = "DELETE"
+    CHANGE_PASSWORD = "CHANGE_PASSWORD"
 
 
 class ItemName(str, Enum):

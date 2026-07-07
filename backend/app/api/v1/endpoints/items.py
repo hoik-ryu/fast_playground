@@ -6,12 +6,16 @@ Items API endpoints.
 - body 필드 설명: app/schemas/item.py 의 Field(description=...)
 - 비즈니스 로직: app/services/item_service.py
 - 전역 Swagger 설정: app/core/openapi.py
+- 예외 처리: service에서 AppException raise → main.py 전역 handler
+- 성공 응답: success_response(data=...) 공통 형식
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.orm import Session
 
+from app.core.responses import success_response
 from app.db.database import get_db
+from app.schemas.common import ApiResponse, ErrorResponse
 from app.schemas.item import ItemCreate, ItemName, ItemResponse, ItemUpdate
 from app.services import item_service
 
@@ -20,24 +24,25 @@ router = APIRouter(prefix="/items", tags=["Items"])
 
 @router.post(
     "",
-    response_model=ItemResponse,
+    response_model=ApiResponse,
     summary="상품 생성",
     description="PostgreSQL items 테이블에 새 행을 추가합니다. name은 과일 enum만 허용됩니다.",
     responses={
-        409: {"description": "name 중복"},
-        422: {"description": "허용되지 않은 name (enum 위반)"},
+        409: {"model": ErrorResponse},
+        422: {"model": ErrorResponse},
     },
 )
 def create_item(item: ItemCreate, db: Session = Depends(get_db)):
-    try:
-        return item_service.create_item(db, item)
-    except item_service.ItemNameDuplicateError:
-        raise HTTPException(status_code=409, detail="중복된 이름으로 생성할 수 없습니다.")
+    created = item_service.create_item(db, item)
+    return success_response(
+        message="상품이 생성되었습니다.",
+        data=ItemResponse.model_validate(created),
+    )
 
 
 @router.get(
     "",
-    response_model=list[ItemResponse],
+    response_model=ApiResponse,
     summary="상품 목록 조회",
     description="등록된 상품 목록을 반환합니다. name Query로 필터할 수 있습니다.",
 )
@@ -49,52 +54,57 @@ def read_items(
     ),
     db: Session = Depends(get_db),
 ):
-    return item_service.list_items(db, name=name.value if name else None)
+    items = item_service.list_items(db, name=name.value if name else None)
+    return success_response(
+        message="상품 목록을 조회했습니다.",
+        data=[ItemResponse.model_validate(item) for item in items],
+    )
 
 
 @router.get(
     "/{item_id}",
-    response_model=ItemResponse,
+    response_model=ApiResponse,
     summary="상품 단건 조회",
-    responses={404: {"description": "상품 없음"}},
+    responses={404: {"model": ErrorResponse}},
 )
 def read_item(
     item_id: int = Path(..., description="조회할 상품 ID", ge=1),
     db: Session = Depends(get_db),
 ):
-    try:
-        return item_service.get_item(db, item_id)
-    except item_service.ItemNotFoundError:
-        raise HTTPException(status_code=404, detail="Item not found")
+    item = item_service.get_item(db, item_id)
+    return success_response(
+        message="상품을 조회했습니다.",
+        data=ItemResponse.model_validate(item),
+    )
 
 
 @router.put(
     "/{item_id}",
-    response_model=ItemResponse,
+    response_model=ApiResponse,
     summary="상품 수정",
     description="기존 상품 정보를 수정합니다.",
     responses={
-        404: {"description": "상품 없음"},
-        409: {"description": "name 중복"},
+        404: {"model": ErrorResponse},
+        409: {"model": ErrorResponse},
     },
 )
 def update_item(item_id: int, item: ItemUpdate, db: Session = Depends(get_db)):
-    try:
-        return item_service.update_item(db, item_id, item)
-    except item_service.ItemNotFoundError:
-        raise HTTPException(status_code=404, detail="Item not found")
-    except item_service.ItemNameDuplicateError:
-        raise HTTPException(status_code=409, detail="중복된 이름으로 수정할 수 없습니다.")
+    updated = item_service.update_item(db, item_id, item)
+    return success_response(
+        message="상품이 수정되었습니다.",
+        data=ItemResponse.model_validate(updated),
+    )
 
 
 @router.delete(
     "/{item_id}",
-    response_model=ItemResponse,
+    response_model=ApiResponse,
     summary="상품 삭제",
-    responses={404: {"description": "상품 없음"}},
+    responses={404: {"model": ErrorResponse}},
 )
 def delete_item(item_id: int, db: Session = Depends(get_db)):
-    try:
-        return item_service.delete_item(db, item_id)
-    except item_service.ItemNotFoundError:
-        raise HTTPException(status_code=404, detail="Item not found")
+    deleted = item_service.delete_item(db, item_id)
+    return success_response(
+        message="상품이 삭제되었습니다.",
+        data=ItemResponse.model_validate(deleted),
+    )

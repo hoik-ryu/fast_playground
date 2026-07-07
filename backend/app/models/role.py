@@ -6,24 +6,24 @@ from app.models.mixins import TimestampMixin
 
 
 class Role(Base, TimestampMixin):
-  __tablename__ = "roles"
+    __tablename__ = "roles"
 
-  id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
 
-  name: Mapped[str] = mapped_column(
-    String(50),
-    unique=True,
-    nullable=False,
-    index=True,
-  )
+    name: Mapped[str] = mapped_column(
+        String(50),
+        unique=True,
+        nullable=False,
+        index=True,
+    )
 
-  description: Mapped[str | None] = mapped_column(
-    String(255),
-    nullable=True,
-  )
+    description: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
 
-  users = relationship(
-    "User",
-    secondary="user_roles",
-    back_populates="roles",
-  )
+    users = relationship(
+        "User",
+        secondary="user_roles",
+        back_populates="roles",
+    )

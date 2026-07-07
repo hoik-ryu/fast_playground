@@ -10,7 +10,9 @@ from app.core.enums import ItemName
 
 
 class ItemCreate(BaseModel):
-    name: ItemName = Field(..., description="상품명 (과일만 허용)", examples=[ItemName.APPLE])
+    name: ItemName = Field(
+        ..., description="상품명 (과일만 허용)", examples=[ItemName.APPLE]
+    )
     price: float = Field(..., description="가격", ge=0, examples=[1000])
     is_offer: bool | None = Field(None, description="할인 여부")
 

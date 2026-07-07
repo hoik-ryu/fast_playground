@@ -2,22 +2,15 @@
 Item 비즈니스 로직.
 
 DB 조회/저장/규칙 검증은 여기서 처리합니다.
-HTTP 상태 코드(404, 409)는 endpoint에서 service 예외를 받아 변환하세요.
+예외는 AppException 하위 클래스를 raise 하고, main.py 전역 handler가 HTTP 응답으로 변환합니다.
 """
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import ItemNameDuplicateException, ItemNotFoundException
 from app.models.item import Item
 from app.schemas.item import ItemCreate, ItemUpdate
-
-
-class ItemNotFoundError(Exception):
-    pass
-
-
-class ItemNameDuplicateError(Exception):
-    pass
 
 
 def list_items(db: Session, name: str | None = None) -> list[Item]:
@@ -30,7 +23,7 @@ def list_items(db: Session, name: str | None = None) -> list[Item]:
 def get_item(db: Session, item_id: int) -> Item:
     item = db.query(Item).filter(Item.id == item_id).first()
     if item is None:
-        raise ItemNotFoundError()
+        raise ItemNotFoundException()
     return item
 
 
@@ -42,7 +35,7 @@ def create_item(db: Session, data: ItemCreate) -> Item:
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise ItemNameDuplicateError()
+        raise ItemNameDuplicateException()
 
     db.refresh(item)
     return item
@@ -58,7 +51,7 @@ def update_item(db: Session, item_id: int, data: ItemUpdate) -> Item:
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise ItemNameDuplicateError()
+        raise ItemNameDuplicateException()
 
     db.refresh(item)
     return item

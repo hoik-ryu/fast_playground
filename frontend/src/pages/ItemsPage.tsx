@@ -198,10 +198,13 @@ export default function ItemsPage() {
 // axios 에러를 사람이 읽을 수 있는 메시지로 변환.
 function toMessage(err: unknown): string {
   if (typeof err === "object" && err !== null && "response" in err) {
-    const response = (err as { response?: { data?: { detail?: string } } })
-      .response;
-    if (response?.data?.detail) {
-      return response.data.detail;
+    const data = (err as { response?: { data?: { detail?: unknown; message?: string } } })
+      .response?.data;
+    if (data?.message && typeof data.message === "string") {
+      return data.message;
+    }
+    if (data?.detail) {
+      return typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
     }
   }
   if (err instanceof Error) {
