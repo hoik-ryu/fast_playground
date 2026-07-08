@@ -1,29 +1,9 @@
-:root {
-  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
-  color-scheme: light dark;
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Pretendard", system-ui, -apple-system, sans-serif;
 }
 
 body {
-  margin: 0;
-}
-
-button {
-  cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #f7f7f7;
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-input {
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  @apply bg-slate-50 text-slate-900 antialiased;
 }

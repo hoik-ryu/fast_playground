@@ -2,8 +2,10 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import ItemsPage from "./pages/ItemsPage";
 import RealtimePage from "./pages/RealtimePage";
+import AccountingOcrPage from "./pages/AccountingOcrPage";
 
 // 라우팅 구성.
 // - /login 은 누구나 접근 가능
@@ -13,11 +15,13 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route index element={<Navigate to="/items" replace />} />
           <Route path="/items" element={<ItemsPage />} />
+          <Route path="/accounting-ocr" element={<AccountingOcrPage />} />
           <Route path="/realtime" element={<RealtimePage />} />
         </Route>
       </Route>

@@ -19,6 +19,14 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 14
 
+    # OCR provider 선택: "mock" | "clova"
+    OCR_PROVIDER: str = "mock"
+
+    # CLOVA General OCR (표 추출) 연동 값.
+    # NAVER Cloud > CLOVA OCR 도메인에서 발급받은 Invoke URL / Secret Key.
+    CLOVA_OCR_API_URL: str = ""
+    CLOVA_OCR_SECRET_KEY: str = ""
+
     CORS_ORIGINS: Annotated[
         list[str],
         NoDecode,
