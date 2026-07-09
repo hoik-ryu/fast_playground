@@ -1,7 +1,19 @@
-import axios from "axios";
+import axios, { AxiosHeaders, type AxiosError, type InternalAxiosRequestConfig } from "axios";
+import {
+  ACCESS_TOKEN_KEY,
+  getRefreshToken,
+  notifySessionExpired,
+  saveTokens,
+} from "../auth/storage";
+import { getApiErrorMessage } from "../utils/apiError";
+import { toastError } from "../utils/toast";
+import { refreshAccessToken } from "./refreshAccessToken";
+
+interface RetryableRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
 
 // 모든 API 요청이 거치는 공용 axios 인스턴스.
-// baseURL 은 .env 의 VITE_API_BASE_URL 로 관리합니다.
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000",
   headers: {
@@ -9,24 +21,121 @@ export const apiClient = axios.create({
   },
 });
 
-// 로그인 붙일 준비: 토큰이 저장돼 있으면 Authorization 헤더를 자동으로 실어 보냅니다.
-// 실제 로그인 API가 생기면 auth/auth.ts 에서 토큰을 저장하기만 하면 됩니다.
+let isRefreshing = false;
+let refreshQueue: {
+  resolve: (accessToken: string) => void;
+  reject: (error: unknown) => void;
+}[] = [];
+
+function isPublicAuthRequest(url?: string) {
+  if (!url) return false;
+  return (
+    url.includes("/auth/login") ||
+    url.includes("/auth/register") ||
+    url.includes("/auth/refresh") ||
+    url.includes("/auth/logout")
+  );
+}
+
+function processRefreshQueue(error: unknown | null, accessToken: string | null) {
+  refreshQueue.forEach(({ resolve, reject }) => {
+    if (error || !accessToken) {
+      reject(error);
+      return;
+    }
+    resolve(accessToken);
+  });
+  refreshQueue = [];
+}
+
+function handleSessionLogout() {
+  const path = window.location.pathname;
+  const isAuthPage = path === "/login" || path === "/register";
+
+  notifySessionExpired();
+  if (!isAuthPage) {
+    window.location.replace("/login");
+  }
+}
+
+function setAuthHeader(config: RetryableRequestConfig, token: string) {
+  const headers = AxiosHeaders.from(config.headers ?? {});
+  headers.set("Authorization", `Bearer ${token}`);
+  config.headers = headers;
+}
+
+function queueRetry(
+  originalRequest: RetryableRequestConfig,
+): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    refreshQueue.push({
+      resolve: (accessToken: string) => {
+        setAuthHeader(originalRequest, accessToken);
+        resolve(apiClient.request(originalRequest));
+      },
+      reject,
+    });
+  });
+}
+
+async function tryRefreshAndRetry(
+  originalRequest: RetryableRequestConfig,
+  error: AxiosError,
+) {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
+    handleSessionLogout();
+    toastError(getApiErrorMessage(error));
+    return Promise.reject(error);
+  }
+
+  if (isRefreshing) {
+    return queueRetry(originalRequest);
+  }
+
+  isRefreshing = true;
+  originalRequest._retry = true;
+
+  try {
+    const tokens = await refreshAccessToken(refreshToken);
+    saveTokens(tokens.access_token, tokens.refresh_token);
+    processRefreshQueue(null, tokens.access_token);
+    setAuthHeader(originalRequest, tokens.access_token);
+    return apiClient.request(originalRequest);
+  } catch (refreshError) {
+    processRefreshQueue(refreshError, null);
+    handleSessionLogout();
+    toastError(getApiErrorMessage(refreshError));
+    return Promise.reject(refreshError);
+  } finally {
+    isRefreshing = false;
+  }
+}
+
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access_token");
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    setAuthHeader(config as RetryableRequestConfig, token);
   }
   return config;
 });
 
-// 401 이 오면(추후 인증 붙였을 때) 로그인 페이지로 보낼 수 있는 자리.
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("access_token");
-      // 필요 시 여기서 window.location 이동 처리
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetryableRequestConfig | undefined;
+    const status = error.response?.status;
+
+    if (
+      status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !isPublicAuthRequest(originalRequest.url)
+    ) {
+      return tryRefreshAndRetry(originalRequest, error);
     }
+
+    toastError(getApiErrorMessage(error));
     return Promise.reject(error);
   },
 );

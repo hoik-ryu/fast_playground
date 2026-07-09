@@ -31,7 +31,7 @@ def create_access_token(subject: str | int) -> str:
   )
 
 
-def create_refresh_token(subject: str | int) -> str:
+def create_refresh_token(subject: str | int) -> tuple[str, datetime]:
   expire = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 
   payload: dict[str, Any] = {
@@ -40,11 +40,13 @@ def create_refresh_token(subject: str | int) -> str:
     "exp": expire,
   }
 
-  return jwt.encode(
+  token = jwt.encode(
     payload,
     settings.SECRET_KEY,
     algorithm=settings.ALGORITHM,
   )
+
+  return token, expire
 
 
 def decode_token(token: str) -> dict[str, Any]:
@@ -52,4 +54,13 @@ def decode_token(token: str) -> dict[str, Any]:
     token,
     settings.SECRET_KEY,
     algorithms=[settings.ALGORITHM],
+  )
+
+
+def decode_token_ignore_expiry(token: str) -> dict[str, Any]:
+  return jwt.decode(
+    token,
+    settings.SECRET_KEY,
+    algorithms=[settings.ALGORITHM],
+    options={"verify_exp": False},
   )

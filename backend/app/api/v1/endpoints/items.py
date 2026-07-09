@@ -10,14 +10,15 @@ Items API endpoints.
 - 성공 응답: success_response(data=...) 공통 형식
 """
 
-from fastapi import APIRouter, Depends, Path, Query
-from sqlalchemy.orm import Session
-
+from app.api.deps import get_current_user
 from app.core.responses import success_response
 from app.db.database import get_db
+from app.models.user import User
 from app.schemas.common import ApiResponse, ErrorResponse
 from app.schemas.item import ItemCreate, ItemName, ItemResponse, ItemUpdate
 from app.services import item_service
+from fastapi import APIRouter, Depends, Path, Query
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/items", tags=["Items"])
 
@@ -32,7 +33,11 @@ router = APIRouter(prefix="/items", tags=["Items"])
         422: {"model": ErrorResponse},
     },
 )
-def create_item(item: ItemCreate, db: Session = Depends(get_db)):
+def create_item(
+    item: ItemCreate,
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(get_current_user),
+):
     created = item_service.create_item(db, item)
     return success_response(
         message="상품이 생성되었습니다.",
@@ -53,6 +58,7 @@ def read_items(
         examples=[ItemName.APPLE],
     ),
     db: Session = Depends(get_db),
+    _current_user: User = Depends(get_current_user),
 ):
     items = item_service.list_items(db, name=name.value if name else None)
     return success_response(
@@ -70,6 +76,7 @@ def read_items(
 def read_item(
     item_id: int = Path(..., description="조회할 상품 ID", ge=1),
     db: Session = Depends(get_db),
+    _current_user: User = Depends(get_current_user),
 ):
     item = item_service.get_item(db, item_id)
     return success_response(
@@ -88,7 +95,12 @@ def read_item(
         409: {"model": ErrorResponse},
     },
 )
-def update_item(item_id: int, item: ItemUpdate, db: Session = Depends(get_db)):
+def update_item(
+    item_id: int,
+    item: ItemUpdate,
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(get_current_user),
+):
     updated = item_service.update_item(db, item_id, item)
     return success_response(
         message="상품이 수정되었습니다.",
@@ -102,7 +114,11 @@ def update_item(item_id: int, item: ItemUpdate, db: Session = Depends(get_db)):
     summary="상품 삭제",
     responses={404: {"model": ErrorResponse}},
 )
-def delete_item(item_id: int, db: Session = Depends(get_db)):
+def delete_item(
+    item_id: int,
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(get_current_user),
+):
     deleted = item_service.delete_item(db, item_id)
     return success_response(
         message="상품이 삭제되었습니다.",

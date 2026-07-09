@@ -19,3 +19,11 @@ class ItemName(str, Enum):
     BANANA = "바나나"
     ORANGE = "오렌지"
     GRAPE = "포도"
+
+
+class RegistrationMode(str, Enum):
+    """회원가입 정책."""
+
+    OPEN = "open"
+    ADMIN_APPROVAL = "admin_approval"
+

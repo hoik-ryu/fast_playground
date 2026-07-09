@@ -37,3 +37,9 @@ class User(Base, TimestampMixin):
         "AuditLog",
         back_populates="user",
     )
+
+    def __repr__(self) -> str:
+        return (
+            f"<User id={self.id} email={self.email!r} "
+            f"name={self.name!r} active={self.is_active}>"
+        )

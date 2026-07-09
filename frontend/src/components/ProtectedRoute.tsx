@@ -1,14 +1,15 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { getAccessToken } from "../auth/storage";
 import { useAuth } from "../auth/AuthContext";
 
-// 로그인 안 된 상태면 /login 으로 보냅니다.
-// 지금은 로그인 준비 단계라, 실제로 막고 싶지 않으면 App.tsx 에서
-// 이 래퍼로 감싸지 않으면 됩니다.
+// access_token 이 없으면 로그인 페이지로 보냅니다.
 export default function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
+  const location = useLocation();
+  const hasToken = isAuthenticated || Boolean(getAccessToken());
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+  if (!hasToken) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
   return <Outlet />;

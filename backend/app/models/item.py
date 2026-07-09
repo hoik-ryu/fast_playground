@@ -11,3 +11,9 @@ class Item(Base):
     name: Mapped[str] = mapped_column(String, unique=True)
     price: Mapped[float] = mapped_column(Float)
     is_offer: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+
+    def __repr__(self) -> str:
+        return (
+            f"<Item id={self.id} name={self.name!r} "
+            f"price={self.price} offer={self.is_offer}>"
+        )

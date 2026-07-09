@@ -1,32 +1,39 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { loginUser } from "../api/auth";
-import { useAuth } from "../auth/AuthContext";
-import { toastError } from "../utils/toast";
+import { Link, useNavigate } from "react-router-dom";
+import { registerUser } from "../api/auth";
+import { toastError, toastSuccess } from "../utils/toast";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const successMessage = (location.state as { message?: string } | null)?.message;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email || !password) {
-      toastError("이메일과 비밀번호를 입력하세요.");
+    if (!email || !name || !password) {
+      toastError("이메일, 이름, 비밀번호를 모두 입력하세요.");
+      return;
+    }
+
+    if (password.length < 8) {
+      toastError("비밀번호는 8자 이상이어야 합니다.");
       return;
     }
 
     setLoading(true);
     try {
-      const tokens = await loginUser({ email, password });
-      login(tokens.access_token, tokens.refresh_token);
-      const from = (location.state as { from?: string } | null)?.from;
-      navigate(from ?? "/items", { replace: true });
+      const { data, message } = await registerUser({ email, name, password });
+
+      if (!data.is_active) {
+        navigate("/login", { replace: true, state: { message } });
+        return;
+      }
+
+      toastSuccess(`${message} 로그인해 주세요.`);
+      navigate("/login", { replace: true });
     } catch {
       // API 에러 toast 는 apiClient 인터셉터에서 처리
     } finally {
@@ -37,16 +44,10 @@ export default function LoginPage() {
   return (
     <div className="mx-auto max-w-sm">
       <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h2 className="text-xl font-bold text-slate-900">로그인</h2>
+        <h2 className="text-xl font-bold text-slate-900">회원가입</h2>
         <p className="mt-1 text-sm text-slate-500">
-          가입한 이메일과 비밀번호로 로그인합니다.
+          이메일, 이름, 비밀번호로 계정을 만듭니다.
         </p>
-
-        {successMessage && (
-          <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            {successMessage}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <label className="block">
@@ -61,13 +62,23 @@ export default function LoginPage() {
             />
           </label>
           <label className="block">
+            <span className="text-sm font-medium text-slate-700">이름</span>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="홍길동"
+              autoComplete="name"
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            />
+          </label>
+          <label className="block">
             <span className="text-sm font-medium text-slate-700">비밀번호</span>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="password"
-              autoComplete="current-password"
+              placeholder="8자 이상"
+              autoComplete="new-password"
               className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
             />
           </label>
@@ -77,17 +88,17 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50"
           >
-            {loading ? "로그인 중..." : "로그인"}
+            {loading ? "가입 중..." : "회원가입"}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-slate-500">
-          계정이 없나요?{" "}
+          이미 계정이 있나요?{" "}
           <Link
-            to="/register"
+            to="/login"
             className="font-medium text-indigo-600 hover:text-indigo-700"
           >
-            회원가입
+            로그인
           </Link>
         </p>
       </div>

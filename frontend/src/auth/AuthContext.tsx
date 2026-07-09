@@ -1,40 +1,80 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import type { ReactNode } from "react";
-
-// 로그인 붙일 준비용 아주 단순한 인증 컨텍스트.
-// 지금은 토큰을 localStorage 에 넣고 로그인 여부만 관리합니다.
-// 나중에 실제 로그인 API가 생기면 login() 내부만 교체하면 됩니다.
+import {
+  AUTH_SESSION_EXPIRED_EVENT,
+  AUTH_TOKENS_UPDATED_EVENT,
+  clearAuthStorage,
+  getAccessToken,
+  saveTokens,
+} from "./storage";
 
 interface AuthContextValue {
   token: string | null;
   isAuthenticated: boolean;
-  login: (token: string) => void;
+  login: (accessToken: string, refreshToken: string) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() =>
-    localStorage.getItem("access_token"),
-  );
+  const [token, setToken] = useState<string | null>(() => getAccessToken());
 
+  const login = useCallback((accessToken: string, refreshToken: string) => {
+    saveTokens(accessToken, refreshToken);
+    setToken(accessToken);
+  }, []);
+
+  const logout = useCallback(() => {
+    clearAuthStorage();
+    setToken(null);
+  }, []);
+
+  // 다른 탭에서 로그아웃했거나 storage 가 비워진 경우 동기화
   useEffect(() => {
-    if (token) {
-      localStorage.setItem("access_token", token);
-    } else {
-      localStorage.removeItem("access_token");
-    }
-  }, [token]);
+    const syncFromStorage = () => {
+      setToken(getAccessToken());
+    };
+
+    const handleSessionExpired = () => {
+      setToken(null);
+    };
+
+    const handleTokensUpdated = () => {
+      setToken(getAccessToken());
+    };
+
+    window.addEventListener("storage", syncFromStorage);
+    window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, handleSessionExpired);
+    window.addEventListener(AUTH_TOKENS_UPDATED_EVENT, handleTokensUpdated);
+    return () => {
+      window.removeEventListener("storage", syncFromStorage);
+      window.removeEventListener(
+        AUTH_SESSION_EXPIRED_EVENT,
+        handleSessionExpired,
+      );
+      window.removeEventListener(
+        AUTH_TOKENS_UPDATED_EVENT,
+        handleTokensUpdated,
+      );
+    };
+  }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       token,
       isAuthenticated: Boolean(token),
-      login: (newToken: string) => setToken(newToken),
-      logout: () => setToken(null),
+      login,
+      logout,
     }),
-    [token],
+    [token, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
