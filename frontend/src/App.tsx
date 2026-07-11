@@ -4,7 +4,9 @@ import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
 import ItemsPage from "./pages/ItemsPage";
+import MyPage from "./pages/MyPage";
 import RealtimePage from "./pages/RealtimePage";
 
 // /login, /register → GuestRoute (토큰 있으면 /items)
@@ -21,6 +23,8 @@ function App() {
         <Route element={<Layout />}>
           <Route index element={<Navigate to="/items" replace />} />
           <Route path="/items" element={<ItemsPage />} />
+          <Route path="/me" element={<MyPage />} />
+          <Route path="/me/password" element={<ChangePasswordPage />} />
           <Route path="/realtime" element={<RealtimePage />} />
         </Route>
       </Route>

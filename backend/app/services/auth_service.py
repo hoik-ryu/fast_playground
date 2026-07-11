@@ -14,6 +14,7 @@ from app.core.security import (
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest
+from app.services.role_service import assign_default_user_role
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -49,6 +50,8 @@ def register_user(
   db.add(user)
 
   try:
+    db.flush()
+    assign_default_user_role(db, user)
     db.commit()
   except IntegrityError:
     db.rollback()

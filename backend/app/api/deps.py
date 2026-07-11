@@ -1,6 +1,6 @@
 import jwt
 from app.core.exceptions import AppException
-from app.core.roles import ADMIN_ROLE_NAME
+from app.core.roles import ADMIN_ROLE_NAME, user_has_any_role
 from app.core.security import decode_token
 from app.db.database import get_db
 from app.models.user import User
@@ -72,18 +72,23 @@ def get_current_user(
   return user
 
 
-def user_has_role(user: User, role_name: str) -> bool:
-  return any(role.name == role_name for role in user.roles)
+def require_roles(*role_names: str):
+  """지정 role 중 하나라도 있으면 통과하는 Depends 팩토리."""
+
+  def checker(current_user: User = Depends(get_current_user)) -> User:
+    if not role_names:
+      return current_user
+
+    if not user_has_any_role(current_user, role_names):
+      raise AppException(
+        message="권한이 없습니다.",
+        error_code="FORBIDDEN",
+        status_code=403,
+      )
+
+    return current_user
+
+  return checker
 
 
-def require_admin(
-  current_user: User = Depends(get_current_user),
-) -> User:
-  if not user_has_role(current_user, ADMIN_ROLE_NAME):
-    raise AppException(
-      message="관리자 권한이 필요합니다.",
-      error_code="FORBIDDEN",
-      status_code=403,
-    )
-
-  return current_user
+require_admin = require_roles(ADMIN_ROLE_NAME)

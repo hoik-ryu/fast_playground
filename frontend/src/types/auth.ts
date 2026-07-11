@@ -24,3 +24,42 @@ export interface LoginTokens {
   refresh_token: string;
   token_type: string;
 }
+
+// GET /users/me 응답 data (백엔드 app/schemas/user.py UserMeResponse)
+export interface Role {
+  id: number;
+  name: string;
+}
+
+export interface UserMe {
+  id: number;
+  email: string;
+  name: string;
+  is_active: boolean;
+  created_at: string | null;
+  roles: Role[];
+}
+
+export interface UserMeUpdate {
+  name: string;
+}
+
+export interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
+}
+
+export interface UserPermissions {
+  manage_users: boolean;
+  view_admin_stats: boolean;
+}
+
+export interface AdminStats {
+  total_users: number;
+}
+
+export interface UserMeContext {
+  profile: UserMe;
+  permissions: UserPermissions;
+  admin_stats: AdminStats | null;
+}

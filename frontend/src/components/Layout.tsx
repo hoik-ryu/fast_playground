@@ -1,8 +1,7 @@
-import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { logoutUser } from "../api/logoutUser";
+import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
-import { getRefreshToken } from "../auth/storage";
+import { useCurrentUser } from "../hooks/useCurrentUser";
+import ProfileMenu from "./ProfileMenu";
 
 const navItems = [
   { to: "/items", label: "Items" },
@@ -10,28 +9,8 @@ const navItems = [
 ];
 
 export default function Layout() {
-  const { isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
-  const [loggingOut, setLoggingOut] = useState(false);
-
-  const handleLogout = async () => {
-    if (loggingOut) return;
-
-    setLoggingOut(true);
-    const refreshToken = getRefreshToken();
-
-    try {
-      if (refreshToken) {
-        await logoutUser(refreshToken);
-      }
-    } catch {
-      // 네트워크 오류·이미 폐기된 토큰이어도 클라이언트 세션은 정리
-    } finally {
-      logout();
-      navigate("/login");
-      setLoggingOut(false);
-    }
-  };
+  const { isAuthenticated } = useAuth();
+  const { user } = useCurrentUser();
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -63,15 +42,8 @@ export default function Layout() {
           </nav>
 
           <div className="ml-auto">
-            {isAuthenticated ? (
-              <button
-                type="button"
-                onClick={handleLogout}
-                disabled={loggingOut}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
-              >
-                {loggingOut ? "로그아웃 중..." : "로그아웃"}
-              </button>
+            {isAuthenticated && user ? (
+              <ProfileMenu user={user} />
             ) : (
               <NavLink
                 to="/login"
