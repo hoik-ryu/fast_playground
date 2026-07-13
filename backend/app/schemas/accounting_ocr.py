@@ -5,8 +5,13 @@
 (source_page <-> sourcePage). CSV 컬럼 순서는 csv_export_service 가 고정.
 """
 
-from pydantic import BaseModel, ConfigDict
+from typing import Annotated
+
+from app.utils.money import parse_money
+from pydantic import BaseModel, BeforeValidator, ConfigDict
 from pydantic.alias_generators import to_camel
+
+MoneyInt = Annotated[int | None, BeforeValidator(parse_money)]
 
 
 class CamelModel(BaseModel):
@@ -21,8 +26,8 @@ class AccountingTransaction(CamelModel):
   year: int
   month: int
   description: str
-  income: int | None = None
-  expense: int | None = None
+  income: MoneyInt = None
+  expense: MoneyInt = None
   note: str = ""
   source_page: int
   category: str
@@ -50,15 +55,15 @@ class AccountingSummary(CamelModel):
   year: int
   month: int  # grand 은 0
   label: str
-  stated_income: int | None = None
-  stated_expense: int | None = None
-  stated_net: int | None = None
-  computed_income: int | None = None
-  computed_expense: int | None = None
-  computed_net: int | None = None
-  income_diff: int | None = None  # computed - stated
-  expense_diff: int | None = None
-  net_diff: int | None = None
+  stated_income: MoneyInt = None
+  stated_expense: MoneyInt = None
+  stated_net: MoneyInt = None
+  computed_income: MoneyInt = None
+  computed_expense: MoneyInt = None
+  computed_net: MoneyInt = None
+  income_diff: MoneyInt = None  # computed - stated
+  expense_diff: MoneyInt = None
+  net_diff: MoneyInt = None
   matched: bool
 
 

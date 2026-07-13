@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BeforeValidator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
@@ -18,6 +18,13 @@ class Settings(BaseSettings):
 
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 14
+
+    # open: 가입 즉시 로그인 가능 / admin_approval: is_active=False 로 대기
+    REGISTRATION_MODE: Literal["open", "admin_approval"] = "open"
+
+    @property
+    def requires_admin_approval(self) -> bool:
+        return self.REGISTRATION_MODE == "admin_approval"
 
     # OCR provider 선택: "mock" | "clova"
     OCR_PROVIDER: str = "mock"
@@ -43,6 +50,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
+        extra="ignore",
     )
 
 

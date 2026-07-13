@@ -12,6 +12,7 @@ import re
 from app.schemas.accounting_ocr import AccountingTransaction
 from app.services import accounting_category_service
 from app.services.ocr_service import OcrRawRow
+from app.utils.money import SUSPICIOUS_AMOUNT_NOTE, append_note, parse_money_amount
 
 
 def _normalize_date(
@@ -56,11 +57,6 @@ def _normalize_date(
   return text, 0, 0
 
 
-def _to_int(raw: str) -> int | None:
-  digits = re.sub(r"[^\d]", "", raw or "")
-  return int(digits) if digits else None
-
-
 def parse_rows(rows: list[OcrRawRow]) -> list[AccountingTransaction]:
   transactions: list[AccountingTransaction] = []
 
@@ -73,11 +69,18 @@ def parse_rows(rows: list[OcrRawRow]) -> list[AccountingTransaction]:
       page_month=page_month,
     )
 
-    income = _to_int(row.get("income", ""))
-    expense = _to_int(row.get("expense", ""))
+    income, income_suspicious = parse_money_amount(row.get("income", ""))
+    expense, expense_suspicious = parse_money_amount(row.get("expense", ""))
 
     description = row["description"].strip()
     note = row.get("note", "").strip()
+
+    if income_suspicious:
+      income = 0
+    if expense_suspicious:
+      expense = 0
+    if income_suspicious or expense_suspicious:
+      note = append_note(note, SUSPICIOUS_AMOUNT_NOTE)
 
     category = accounting_category_service.classify(
       description=description,

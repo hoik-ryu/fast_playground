@@ -12,18 +12,12 @@ OCR 로 뽑은 거래내역을 실제로 합산해 이 값과 대조하면
   (이월잔액 + 월순액 == running)만 확인.
 """
 
-import re
-
 from app.schemas.accounting_ocr import (
   AccountingSummary,
   AccountingTransaction,
 )
 from app.services.ocr_service import OcrRawSummary
-
-
-def _to_int(raw: str) -> int | None:
-  digits = re.sub(r"[^\d]", "", raw or "")
-  return int(digits) if digits else None
+from app.utils.money import parse_money
 
 
 def _diff(computed: int | None, stated: int | None) -> int | None:
@@ -45,9 +39,9 @@ def _reconcile_monthly(
   computed_expense = sum(t.expense or 0 for t in page_txs)
   computed_net = computed_income - computed_expense
 
-  stated_income = _to_int(raw["amount_col2"])
-  stated_expense = _to_int(raw["amount_col3"])
-  stated_net = _to_int(raw["amount_col4"])
+  stated_income = parse_money(raw["amount_col2"])
+  stated_expense = parse_money(raw["amount_col3"])
+  stated_net = parse_money(raw["amount_col4"])
 
   income_diff = _diff(computed_income, stated_income)
   expense_diff = _diff(computed_expense, stated_expense)
@@ -77,9 +71,9 @@ def _reconcile_monthly(
 
 def _reconcile_grand(raw: OcrRawSummary) -> AccountingSummary:
   """총 합계 행: 이월잔액 + 월순액 == running 인지 내부 정합성만 확인."""
-  balance = _to_int(raw["amount_col2"])  # 이월 잔액
-  month_net = _to_int(raw["amount_col3"])  # 이번(해당 기간) 순액
-  running = _to_int(raw["amount_col4"])  # 장부에 적힌 총합계
+  balance = parse_money(raw["amount_col2"])  # 이월 잔액
+  month_net = parse_money(raw["amount_col3"])  # 이번(해당 기간) 순액
+  running = parse_money(raw["amount_col4"])  # 장부에 적힌 총합계
 
   computed_net = None
   if balance is not None and month_net is not None:
