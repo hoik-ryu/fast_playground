@@ -1,0 +1,53 @@
+# Sales.AX 개발환경 (PostgreSQL + Backend)
+# Frontend는 호스트에서 `cd frontend && pnpm dev` 로 실행합니다.
+#
+# 사용법:
+#   docker compose -f docker-compose.dev.yml up
+#   docker compose -f docker-compose.dev.yml down
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sales-ax-postgres
+    environment:
+      POSTGRES_USER: sales_ax
+      POSTGRES_PASSWORD: sales_ax
+      POSTGRES_DB: sales_ax
+    ports:
+      - "5432:5432"
+    volumes:
+      - sales_ax_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sales_ax -d sales_ax"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+    container_name: sales-ax-backend
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://sales_ax:sales_ax@postgres:5432/sales_ax
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      SECRET_KEY: change-this-secret-key-in-dev
+      ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+      REFRESH_TOKEN_EXPIRE_DAYS: "14"
+      REGISTRATION_MODE: open
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      - sh
+      - -c
+      - |
+        uv sync
+        uv run alembic upgrade head
+        uv run fastapi dev app/main.py --host 0.0.0.0 --port 8000
+
+volumes:
+  sales_ax_pgdata:

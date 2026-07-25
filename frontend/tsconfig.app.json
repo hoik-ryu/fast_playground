@@ -7,6 +7,13 @@
     "types": ["vite/client"],
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
+    "paths": {
+      "@app/*": ["./src/app/*"],
+      "@pages/*": ["./src/pages/*"],
+      "@features/*": ["./src/features/*"],
+      "@entities/*": ["./src/entities/*"],
+      "@shared/*": ["./src/shared/*"]
+    },
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -16,11 +23,18 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Type checking — 6-1 즉시 적용 */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+
     /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
+
+    /* 추후 적용: exactOptionalPropertyTypes */
   },
   "include": ["src"]
 }

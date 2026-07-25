@@ -1,0 +1,8 @@
+dist
+node_modules
+coverage
+.venv
+pnpm-lock.yaml
+uv.lock
+*.min.js
+*.min.css

@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+set -e
+
+ROOT="$(git rev-parse --show-toplevel)"
+
+# Frontend: staged 파일만 ESLint/Prettier (전체 lint/build 금지)
+cd "$ROOT/frontend"
+pnpm exec lint-staged
+
+# Backend: staged Python이 있을 때만 Ruff
+# (Frontend 패키지 밖 경로는 Hook에서 분리 — OS/경로 유지보수성)
+cd "$ROOT"
+STAGED_PY=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^backend/.*\.py$' || true)
+
+if [ -n "$STAGED_PY" ]; then
+  cd "$ROOT/backend"
+  FILES=$(printf '%s\n' "$STAGED_PY" | sed 's|^backend/||')
+  printf '%s\n' "$FILES" | tr '\n' '\0' | xargs -0 uv run ruff check --fix
+  printf '%s\n' "$FILES" | tr '\n' '\0' | xargs -0 uv run ruff format
+fi

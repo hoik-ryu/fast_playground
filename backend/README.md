@@ -39,21 +39,21 @@ fast/
 
 ## 실행 방법
 
-```bash
-cd fast
-source .venv/bin/activate
-fastapi dev main.py --host 127.0.0.1 --port 8000
-```
-
-가상환경 없이 실행하려면:
+**Requirements:** Python `3.12.13` (see `.python-version`), uv `0.11.27+` (see `[tool.uv]` in `pyproject.toml`).
 
 ```bash
-.venv/bin/fastapi dev main.py --host 127.0.0.1 --port 8000
+cd backend
+cp .env.example .env   # 최초 1회
+rm -rf .venv           # Python 버전 변경 시 또는 venv 경로 오류 시
+uv sync
+uv run alembic upgrade head
+uv run fastapi dev app/main.py --host 127.0.0.1 --port 8000
 ```
 
 ## 기술 스택
 
-- Python 3.11
+- Python 3.12
+- uv
 - FastAPI
 - Pydantic
 - Uvicorn
