@@ -1,3 +1,4 @@
+import { getApiData } from './getApiResponse';
 import { refreshClient } from './refreshClient';
 import type { ApiResponse } from './types';
 
@@ -12,5 +13,5 @@ export async function refreshAccessToken(refreshToken: string): Promise<RefreshT
   const res = await refreshClient.post<ApiResponse<RefreshTokenResponse>>('/auth/refresh', {
     refresh_token: refreshToken,
   });
-  return res.data.data;
+  return getApiData(res);
 }

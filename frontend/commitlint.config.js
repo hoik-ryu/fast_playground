@@ -11,5 +11,7 @@ export default {
     'body-empty': [2, 'never'],
     // body와 header 사이 빈 줄
     'body-leading-blank': [2, 'always'],
+    // FSD, JWT, API 등 약어·고유명사 대문자 허용
+    'subject-case': [0],
   },
 };

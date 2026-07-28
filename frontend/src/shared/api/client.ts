@@ -8,17 +8,24 @@ import {
 } from '@shared/lib/session';
 import { toastError } from '@shared/lib/toast';
 
+import { getCurrentApiBaseUrl } from './apiMode';
 import { refreshAccessToken } from './authRefresh';
 import { getApiErrorMessage } from './getApiErrorMessage';
+import { API_TIMEOUT_MS } from './httpConfig';
 import type { ErrorResponse } from './types';
 
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
+function isCanceledError(error: AxiosError): boolean {
+  return axios.isCancel(error) || error.code === 'ERR_CANCELED';
+}
+
 // 모든 API 요청이 거치는 공용 axios 인스턴스.
+// baseURL 은 request interceptor 에서 현재 API mode 기준으로 설정합니다.
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000',
+  timeout: API_TIMEOUT_MS,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -51,14 +58,21 @@ function processRefreshQueue(error: unknown | null, accessToken: string | null) 
   refreshQueue = [];
 }
 
-function handleSessionLogout() {
+/** @returns 이번 호출에서 세션 종료(redirect 포함)를 수행했는지 */
+function handleSessionLogout(): boolean {
+  const didExpire = notifySessionExpired();
+  if (!didExpire) {
+    return false;
+  }
+
   const path = window.location.pathname;
   const isAuthPage = path === '/login' || path === '/register';
 
-  notifySessionExpired();
   if (!isAuthPage) {
     window.location.replace('/login');
   }
+
+  return true;
 }
 
 function setAuthHeader(config: RetryableRequestConfig, token: string) {
@@ -71,6 +85,7 @@ function queueRetry(originalRequest: RetryableRequestConfig): Promise<unknown> {
   return new Promise((resolve, reject) => {
     refreshQueue.push({
       resolve: (accessToken: string) => {
+        originalRequest._retry = true;
         setAuthHeader(originalRequest, accessToken);
         resolve(apiClient.request(originalRequest));
       },
@@ -82,8 +97,9 @@ function queueRetry(originalRequest: RetryableRequestConfig): Promise<unknown> {
 async function tryRefreshAndRetry(originalRequest: RetryableRequestConfig, error: AxiosError) {
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
-    handleSessionLogout();
-    toastError(getApiErrorMessage(error));
+    if (handleSessionLogout()) {
+      toastError(getApiErrorMessage(error));
+    }
     return Promise.reject(error);
   }
 
@@ -102,8 +118,9 @@ async function tryRefreshAndRetry(originalRequest: RetryableRequestConfig, error
     return apiClient.request(originalRequest);
   } catch (refreshError) {
     processRefreshQueue(refreshError, null);
-    handleSessionLogout();
-    toastError(getApiErrorMessage(refreshError));
+    if (handleSessionLogout()) {
+      toastError(getApiErrorMessage(refreshError));
+    }
     return Promise.reject(refreshError);
   } finally {
     isRefreshing = false;
@@ -111,6 +128,8 @@ async function tryRefreshAndRetry(originalRequest: RetryableRequestConfig, error
 }
 
 apiClient.interceptors.request.use((config) => {
+  config.baseURL = getCurrentApiBaseUrl();
+
   const token = getAccessToken();
   if (token) {
     setAuthHeader(config as RetryableRequestConfig, token);
@@ -121,6 +140,10 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
+    if (isCanceledError(error)) {
+      return Promise.reject(error);
+    }
+
     const originalRequest = error.config as RetryableRequestConfig | undefined;
     const status = error.response?.status;
 

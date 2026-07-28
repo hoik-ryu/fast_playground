@@ -9,9 +9,13 @@
 
 | 문서 | 설명 |
 |------|------|
+| [git-convention.md](./git-convention.md) | 브랜치 전략·Conventional Commits·scope·언어 정책 |
+| [code-review-checklist.md](./code-review-checklist.md) | MR 리뷰 기준 체크리스트 |
+| [issue-workflow.md](./issue-workflow.md) | Issue ↔ Branch ↔ MR 연결 규칙 |
+| [repository-policy.md](./repository-policy.md) | Protected Branch·Merge 권한·승인·CODEOWNERS |
 | [frontend-architecture.md](./frontend-architecture.md) | FSD-lite 레이어·import·Query Key·네이밍 |
 | [frontend-stack.md](./frontend-stack.md) | Frontend 기술 스택 표준·개발 규칙 |
-| _(추가 예정)_ | API, 인증, 배포 등 |
+| _(추가 예정)_ | API, 인증, 배포, MR 협업 등 |
 
 ## 작성 원칙
 

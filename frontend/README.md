@@ -99,6 +99,8 @@ pnpm check          # lint → typecheck → build
 
 ### Commit Message 규칙
 
+전체 브랜치·type·scope·언어 정책: [`docs/git-convention.md`](../docs/git-convention.md)
+
 ```text
 feat(auth): 로그인 기능 구현
 
@@ -110,6 +112,7 @@ feat(auth): 로그인 기능 구현
 - header 최대 100자
 - **body 필수** (한 줄 커밋 금지)
 - body와 header 사이 빈 줄 필수
+- subject 대소문자 제한 없음 (`subject-case` off)
 
 로컬에서 메시지만 검사:
 

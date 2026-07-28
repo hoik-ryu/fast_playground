@@ -40,7 +40,7 @@ sales-ax/
 - `pre-commit`: staged Frontend(ESLint/Prettier) + staged Backend Python(Ruff)
 - `commit-msg`: Conventional Commit (`type(scope): summary` + body 필수)
 
-세부 규칙: [`frontend/README.md`](./frontend/README.md) — **Git Hook · Commit 규칙**  
+세부 규칙: [`docs/git-convention.md`](./docs/git-convention.md) · Hook 요약: [`frontend/README.md`](./frontend/README.md)  
 `pnpm check`는 Hook이 아니라 수동/CI용 전체 검사입니다.
 
 ## 요구 버전

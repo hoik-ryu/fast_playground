@@ -1,0 +1,31 @@
+# CODEOWNERS
+#
+# Sales.AX Boilerplate — 영역별 코드 소유자 예시입니다.
+# ★ 프로젝트에 맞게 아래 placeholder를 실제 사용자/그룹으로 수정하세요.
+#
+# GitLab: @username 또는 @group / @group/subgroup
+# GitHub: @username 또는 @org/team
+#
+# 참고: docs/repository-policy.md
+# 실제 계정이 준비되기 전에는 Code owner 강제 승인을 켜지 마세요.
+
+# 기본 담당 (경로가 아래에 안 걸릴 때)
+* @maintainers
+
+# Frontend (React + TypeScript)
+/frontend/ @frontend-team
+
+# Backend (FastAPI)
+/backend/ @backend-team
+
+# 문서
+/docs/ @maintainers
+
+# 저장소·협업 설정 (민감)
+/.gitlab/ @maintainers
+/.husky/ @maintainers
+/CODEOWNERS @maintainers
+/.editorconfig @maintainers
+/.gitignore @maintainers
+/docker-compose.dev.yml @maintainers
+/README.md @maintainers

@@ -15,6 +15,8 @@ import { type Item, ITEM_NAMES, type ItemName, useItems } from '@entities/item';
 import { mapServerErrors } from '@shared/lib/form/mapServerErrors';
 import { toastSuccess } from '@shared/lib/toast';
 import { Checkbox, FormField, NumberInput, Select, SubmitButton } from '@shared/ui/form';
+import { LoadingSpinner } from '@shared/ui/loading';
+import { PageHeader } from '@shared/ui/page-header';
 
 const FRUIT_EMOJI: Record<ItemName, string> = {
   사과: '🍎',
@@ -67,21 +69,17 @@ export function ItemsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">상품 관리</h1>
-          <p className="mt-1 text-sm text-slate-500">과일 상품을 등록하고 목록을 관리합니다.</p>
-        </div>
+      <PageHeader title="상품 관리" description="과일 상품을 등록하고 목록을 관리합니다.">
         <button
           type="button"
           onClick={() => void refetch()}
           disabled={isFetching}
           className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <span className={isFetching ? 'animate-spin' : ''}>↻</span>
+          {isFetching ? <LoadingSpinner size="sm" /> : <span aria-hidden>↻</span>}
           {isFetching ? '불러오는 중...' : '목록 새로고침'}
         </button>
-      </div>
+      </PageHeader>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
